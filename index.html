@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoppoAPIConsole | NoppoStudio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0f4f8; color: #1e293b; overflow: hidden; }
+        .font-logo { font-family: 'Space Grotesk', sans-serif; }
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(20px) saturate(160%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .active-tab { background: #2563eb !important; color: white !important; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2); }
+    </style>
+</head>
+<body class="h-screen flex">
+
+    <aside id="sidebar" class="hidden w-72 h-full liquid-glass border-r flex flex-col p-8 z-20">
+        <div class="flex items-center gap-4 mb-12">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-xl">N</div>
+            <h1 class="text-xl font-black font-logo tracking-tighter text-blue-900">Noppo<br><span class="text-blue-600 text-sm">APIConsole</span></h1>
+        </div>
+        
+        <nav class="flex-1 space-y-2">
+            <button onclick="switchTab('keys')" id="btn-keys" class="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-extrabold transition-all text-slate-400 hover:bg-white/50 active-tab">
+                <span>API Keys</span>
+            </button>
+            <button onclick="switchTab('usage')" id="btn-usage" class="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-bold text-slate-400 hover:bg-white/50 transition-all">
+                <span>Usage Stats</span>
+            </button>
+            <a href="document.html" class="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-bold text-slate-400 hover:bg-white/50 transition-all">
+                <span>Documentation</span>
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-white/20">
+            <div class="flex items-center gap-4 px-2">
+                <img id="user-avatar" class="w-10 h-10 rounded-full border-2 border-white" src="">
+                <div class="overflow-hidden">
+                    <p id="user-name" class="text-sm font-black truncate"></p>
+                    <button onclick="logout()" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 h-full overflow-y-auto p-10">
+        <div id="view-login" class="h-full flex flex-col items-center justify-center text-center">
+            <h2 class="text-5xl font-black text-slate-900 mb-8 tracking-tighter">NoppoAPIConsole</h2>
+            <button onclick="login()" class="bg-blue-600 text-white px-12 py-5 rounded-3xl font-black text-xl shadow-2xl">Sign In with NoppoAuth</button>
+        </div>
+
+        <div id="view-content" class="hidden max-w-5xl mx-auto space-y-10">
+            
+            <section id="section-keys" class="space-y-8">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h2 class="text-4xl font-black text-slate-900 tracking-tight">API Keys</h2>
+                        <p class="text-slate-500 mt-2"><code>noppo-api-key</code> を管理するぜ。</p>
+                    </div>
+                    <button onclick="createKey()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl">+ New Key</button>
+                </div>
+                <div id="key-list" class="grid gap-4"></div>
+            </section>
+
+            <section id="section-usage" class="hidden space-y-8">
+                <h2 class="text-4xl font-black text-slate-900 tracking-tight">Usage Stats</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="liquid-glass p-10 rounded-[2.5rem] border shadow-sm">
+                        <p class="text-xs font-bold text-slate-400 uppercase mb-2">Total Requests</p>
+                        <p id="stat-usage-count" class="text-6xl font-black text-blue-600">0</p>
+                        <p class="text-xs text-slate-400 mt-4">KVに記録された総リクエスト数だぜ。</p>
+                    </div>
+                    <div class="liquid-glass p-10 rounded-[2.5rem] border shadow-sm flex items-center justify-center">
+                        <div class="text-center">
+                            <p class="text-slate-400 font-bold italic text-sm">Traffic Analysis</p>
+                            <p class="text-xs text-slate-300">Coming soon...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        const GATEWAY = "https://noppo-api.noppo5319.workers.dev";
+        const AUTH_URL = "https://noppo-auth.noppo5319.workers.dev";
+        let currentUser = null;
+
+        function switchTab(tab) {
+            const tabs = ['keys', 'usage'];
+            tabs.forEach(t => {
+                const sec = document.getElementById('section-' + t);
+                const btn = document.getElementById('btn-' + t);
+                if (sec && btn) {
+                    sec.classList.add('hidden');
+                    btn.classList.remove('active-tab');
+                }
+            });
+            document.getElementById('section-' + tab).classList.remove('hidden');
+            document.getElementById('btn-' + tab).classList.add('active-tab');
+            if (tab === 'usage') loadUsage();
+        }
+
+        async function loadKeys() {
+            const res = await fetch(GATEWAY + "/v1/console/keys?userId=" + currentUser.userId);
+            const keys = await res.json();
+            const list = document.getElementById('key-list');
+            list.innerHTML = keys.length ? keys.map(k => `
+                <div class="liquid-glass p-6 rounded-[2rem] flex justify-between items-center shadow-sm">
+                    <div>
+                        <h4 class="font-black text-slate-800 mb-1">${k.label}</h4>
+                        <code class="text-xs font-mono text-blue-500 bg-blue-50 px-2 py-1 rounded-md">${k.key}</code>
+                    </div>
+                    <button onclick="deleteKey('${k.key}')" class="text-red-400 text-xs font-bold hover:bg-red-50 px-4 py-2 rounded-xl transition-all">REVOKE</button>
+                </div>
+            `).join('') : `<div class="p-10 text-center text-slate-400">キーがありません。</div>`;
+        }
+
+        async function loadUsage() {
+            const res = await fetch(GATEWAY + "/v1/console/usage?userId=" + currentUser.userId);
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('stat-usage-count').innerText = data.count.toLocaleString();
+            }
+        }
+
+        async function createKey() {
+            const label = prompt("名前を入力してくれ");
+            if (!label) return;
+            await fetch(GATEWAY + "/v1/console/keys", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.userId, label })
+            });
+            await loadKeys();
+        }
+
+        async function deleteKey(key) {
+            if (!confirm("本当に消すかい？")) return;
+            await fetch(GATEWAY + "/v1/console/keys", {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key })
+            });
+            await loadKeys();
+        }
+
+        function login() { window.location.href = AUTH_URL + "?redirect=" + encodeURIComponent(location.href); }
+        function logout() { localStorage.removeItem('noppo_session'); location.href = window.location.pathname; }
+
+        async function init() {
+            const ticket = new URLSearchParams(window.location.search).get('ticket');
+            if (ticket) {
+                const res = await fetch(GATEWAY + "/auth/validate?ticket=" + ticket);
+                if (res.ok) {
+                    const user = await res.json();
+                    localStorage.setItem('noppo_session', JSON.stringify(user));
+                    window.history.replaceState({}, "", window.location.pathname);
+                }
+            }
+            const saved = localStorage.getItem('noppo_session');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                document.getElementById('view-login').classList.add('hidden');
+                document.getElementById('sidebar').classList.replace('hidden', 'flex');
+                document.getElementById('view-content').classList.remove('hidden');
+                document.getElementById('user-name').innerText = currentUser.userId;
+                document.getElementById('user-avatar').src = currentUser.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=" + currentUser.userId;
+                await loadKeys();
+            }
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>

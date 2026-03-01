@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Reference | NoppoStudio Developers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Roboto+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --google-blue: #1a73e8;
+            --google-gray-50: #f8f9fa;
+            --google-gray-100: #f1f3f4;
+            --google-gray-200: #e8eaed;
+            --google-gray-700: #5f6368;
+            --google-gray-900: #202124;
+            --border-color: #dadce0;
+        }
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #ffffff;
+            color: var(--google-gray-900);
+            margin: 0;
+            display: flex;
+        }
+        /* Sidebar Navigation */
+        .dev-sidebar {
+            width: 280px;
+            height: 100vh;
+            position: fixed;
+            border-right: 1px solid var(--border-color);
+            background: #ffffff;
+            overflow-y: auto;
+            z-index: 10;
+        }
+        .nav-item {
+            padding: 8px 24px;
+            font-size: 14px;
+            color: var(--google-gray-700);
+            cursor: pointer;
+            display: block;
+            text-decoration: none;
+        }
+        .nav-item:hover { background-color: var(--google-gray-100); }
+        .nav-item.active {
+            color: var(--google-blue);
+            background-color: #e8f0fe;
+            font-weight: 600;
+            border-radius: 0 20px 20px 0;
+            margin-right: 8px;
+        }
+        .nav-section-title {
+            padding: 24px 24px 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--google-gray-900);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        /* Main Content */
+        .dev-main {
+            margin-left: 280px;
+            flex-grow: 1;
+            padding: 48px 64px;
+            max-width: 1000px;
+        }
+        h1 { font-size: 32px; font-weight: 400; margin-bottom: 16px; }
+        h2 { font-size: 24px; font-weight: 400; margin-top: 48px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        h3 { font-size: 18px; font-weight: 600; margin-top: 32px; }
+        p { line-height: 1.6; margin-bottom: 16px; font-size: 15px; }
+        /* Code & Tables */
+        code {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--google-gray-100);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        pre {
+            background-color: var(--google-gray-900);
+            color: #ffffff;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 24px 0;
+        }
+        .endpoint-box {
+            background-color: var(--google-gray-50);
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            margin: 16px 0;
+        }
+        .method { font-weight: 700; margin-right: 8px; }
+        .method.get { color: #1a73e8; }
+        .method.post { color: #188038; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border-color); font-size: 14px; }
+        td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 14px; vertical-align: top; }
+        .req-tag { color: #d93025; font-size: 12px; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <nav class="dev-sidebar">
+        <div style="padding: 24px; border-bottom: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 24px; height: 24px; background: var(--google-blue); border-radius: 4px;"></div>
+                <span style="font-weight: 600; font-size: 18px; color: #5f6368;">NoppoStudio</span>
+            </div>
+        </div>
+        
+        <div class="nav-section-title">Guides</div>
+        <a href="index.html" class="nav-item">Console Overview</a>
+        <a href="#auth" class="nav-item">Authentication</a>
+        
+        <div class="nav-section-title">Reference</div>
+        <div style="padding: 8px 24px; font-weight: 600; font-size: 13px;">Drive API</div>
+        <a href="#drive-files-list" class="nav-item active">drive.files.list</a>
+        <a href="#drive-files-get" class="nav-item">drive.files.get</a>
+        
+        <div style="padding: 8px 24px; font-weight: 600; font-size: 13px; margin-top: 16px;">Intelligence API</div>
+        <a href="#ai-chat" class="nav-item">intelligence.chat.completions</a>
+    </nav>
+
+    <main class="dev-main">
+        <section id="header">
+            <h1>API Reference v1</h1>
+            <p>本ドキュメントは、NoppoStudio Infrastructureにおける統合APIエンドポイントの技術仕様を記述したものである。すべてのリクエストは、NoppoAPIConsoleにて発行された認証資格情報を要求する。</p>
+        </section>
+
+        <section id="auth">
+            <h2>認証 (Authentication)</h2>
+            <p>全てのAPIリクエストには、HTTPヘッダーに有効な <code>noppo-api-key</code> を含める必要がある。このキーは <code>np_</code> プレフィックスから始まる構造化文字列であり、NoppoAPIConsoleを通じてのみ発行および管理が可能である。</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Header</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>noppo-api-key</code></td>
+                        <td>String</td>
+                        <td><span class="req-tag">Required</span> 発行されたAPIキー。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="drive-files-list">
+            <h2>drive.files.list</h2>
+            <p>認証されたアカウントに関連付けられたファイルリソースのメタデータ一覧を取得する。レスポンスはページネーションに対応したJSONオブジェクトとして返却される。</p>
+            
+            <div class="endpoint-box">
+                <span class="method get">GET</span> https://noppo-api.noppo5319.workers.dev/v1/drive/files
+            </div>
+
+            <h3>Query Parameters</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>folder_id</code></td>
+                        <td>string</td>
+                        <td>取得対象の親ディレクトリ識別子。指定がない場合はルートディレクトリが対象となる。</td>
+                    </tr>
+                    <tr>
+                        <td><code>pageSize</code></td>
+                        <td>integer</td>
+                        <td>一度のリクエストで返却される最大アイテム数（デフォルト: 20）。</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Response Body</h3>
+            <pre>{
+  "kind": "noppo#fileList",
+  "files": [
+    {
+      "id": "string",
+      "name": "string",
+      "mimeType": "string",
+      "size": "long"
+    }
+  ]
+}</pre>
+        </section>
+
+        <section id="ai-chat">
+            <h2>intelligence.chat.completions</h2>
+            <p>Noppo Intelligence (Nexus) LLM への推論リクエストを実行する。入力メッセージの履歴を保持したコンテキスト処理が可能である。</p>
+            
+            <div class="endpoint-box">
+                <span class="method post">POST</span> https://noppo-api.noppo5319.workers.dev/v1/ai/chat
+            </div>
+
+            <h3>Request Body</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>messages</code></td>
+                        <td>array</td>
+                        <td><span class="req-tag">Required</span> roleおよびcontentを含むメッセージオブジェクトのリスト。</td>
+                    </tr>
+                    <tr>
+                        <td><code>stream</code></td>
+                        <td>boolean</td>
+                        <td>ストリーミングレスポンスの有効化。デフォルトはfalse。</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Code Sample (cURL)</h3>
+            <pre>curl -X POST "https://noppo-api.noppo5319.workers.dev/v1/ai/chat" \
+     -H "noppo-api-key: np_xxxxxxxxxxxx" \
+     -H "Content-Type: application/json" \
+     -d '{"messages": [{"role": "user", "content": "Query"}]}'</pre>
+        </section>
+
+        <footer style="margin-top: 100px; padding-top: 24px; border-top: 1px solid var(--border-color); color: var(--google-gray-700); font-size: 12px;">
+            &copy; 2026 NoppoStudio Infrastructure Services. All rights reserved.
+        </footer>
+    </main>
+
+</body>
+</html>
