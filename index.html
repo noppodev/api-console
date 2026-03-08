@@ -5,85 +5,279 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NoppoAPIConsole | NoppoStudio</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0f4f8; color: #1e293b; overflow: hidden; }
-        .font-logo { font-family: 'Space Grotesk', sans-serif; }
-        .liquid-glass {
-            background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(20px) saturate(160%);
-            border: 1px solid rgba(255, 255, 255, 0.6);
+        :root {
+            --noppo-blue: #2563eb;
+            --noppo-blue-light: #60a5fa;
+            --noppo-bg: #f8fafc;
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.7);
         }
-        .active-tab { background: #2563eb !important; color: white !important; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2); }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--noppo-bg); 
+            color: #1e293b; 
+            overflow: hidden;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.08) 0px, transparent 40%),
+                radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.08) 0px, transparent 40%),
+                radial-gradient(at 50% 50%, rgba(37, 99, 235, 0.02) 0px, transparent 80%);
+        }
+
+        .font-logo { font-family: 'Space Grotesk', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        .liquid-glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px -10px rgba(31, 38, 135, 0.1);
+        }
+
+        .active-tab { 
+            background: var(--noppo-blue) !important; 
+            color: white !important; 
+            box-shadow: 0 15px 25px -10px rgba(37, 99, 235, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-btn:hover:not(.active-tab) {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateX(6px);
+            color: var(--noppo-blue);
+        }
+
+        .card-animate {
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+        }
+
+        .card-animate:hover {
+            transform: scale(1.015) translateY(-5px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+            border-color: var(--noppo-blue-light);
+        }
+
+        /* カスタムスクロールバー */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* 通知トースト */
+        #toast-container {
+            position: fixed;
+            bottom: 2.5rem;
+            right: 2.5rem;
+            z-index: 100;
+        }
+
+        .toast {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            color: white;
+            padding: 1.25rem 1.75rem;
+            border-radius: 1.25rem;
+            margin-top: 0.75rem;
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: toastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(50px) scale(0.9); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        /* スケルトンアニメーション */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+        }
+
+        /* グラフ用 */
+        .chart-path {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine 2s ease-out forwards;
+        }
+        @keyframes drawLine {
+            to { stroke-dashoffset: 0; }
+        }
     </style>
 </head>
 <body class="h-screen flex">
+    
+    <div id="toast-container"></div>
 
-    <aside id="sidebar" class="hidden w-72 h-full liquid-glass border-r flex flex-col p-8 z-20">
-        <div class="flex items-center gap-4 mb-12">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-xl">N</div>
-            <h1 class="text-xl font-black font-logo tracking-tighter text-blue-900">Noppo<br><span class="text-blue-600 text-sm">APIConsole</span></h1>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="hidden w-80 h-full liquid-glass border-r flex flex-col p-10 z-20 shrink-0">
+        <div class="flex items-center gap-5 mb-16">
+            <div class="w-12 h-12 bg-blue-600 rounded-[1.25rem] flex items-center justify-center text-white font-bold shadow-xl shadow-blue-500/30">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black font-logo leading-none text-slate-900 tracking-tighter">Noppo</h1>
+                <span class="text-blue-600 text-[10px] font-extrabold tracking-[0.2em] uppercase opacity-80">Developer Center</span>
+            </div>
         </div>
         
-        <nav class="flex-1 space-y-2">
-            <button onclick="switchTab('keys')" id="btn-keys" class="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-extrabold transition-all text-slate-400 hover:bg-white/50 active-tab">
+        <nav class="flex-1 space-y-4">
+            <button onclick="switchTab('keys')" id="btn-keys" class="nav-btn w-full flex items-center gap-4 px-6 py-5 rounded-[1.5rem] text-sm font-bold text-slate-500 active-tab">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
                 <span>API Keys</span>
             </button>
-            <button onclick="switchTab('usage')" id="btn-usage" class="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-bold text-slate-400 hover:bg-white/50 transition-all">
+            <button onclick="switchTab('usage')" id="btn-usage" class="nav-btn w-full flex items-center gap-4 px-6 py-5 rounded-[1.5rem] text-sm font-bold text-slate-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 <span>Usage Stats</span>
             </button>
-            <a href="document.html" class="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-bold text-slate-400 hover:bg-white/50 transition-all">
-                <span>Documentation</span>
+            <div class="pt-6 pb-2 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Resources</div>
+            <!-- Updated to point to document.html -->
+            <a href="document.html" class="nav-btn w-full flex items-center gap-4 px-6 py-5 rounded-[1.5rem] text-sm font-bold text-slate-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                <span>Docs</span>
             </a>
         </nav>
 
-        <div class="mt-auto pt-6 border-t border-white/20">
-            <div class="flex items-center gap-4 px-2">
-                <img id="user-avatar" class="w-10 h-10 rounded-full border-2 border-white" src="">
+        <div class="mt-auto pt-8 border-t border-slate-200/60">
+            <div class="flex items-center gap-4 bg-white/50 p-4 rounded-[1.5rem] border border-white/60">
+                <div class="relative">
+                    <img id="user-avatar" class="w-12 h-12 rounded-[1.1rem] bg-blue-100 object-cover" src="">
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                </div>
                 <div class="overflow-hidden">
-                    <p id="user-name" class="text-sm font-black truncate"></p>
-                    <button onclick="logout()" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase transition-colors">Sign Out</button>
+                    <p id="user-name" class="text-sm font-extrabold truncate text-slate-900">Developer</p>
+                    <button onclick="logout()" class="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase transition-colors tracking-widest">Sign Out</button>
                 </div>
             </div>
         </div>
     </aside>
 
-    <main class="flex-1 h-full overflow-y-auto p-10">
-        <div id="view-login" class="h-full flex flex-col items-center justify-center text-center">
-            <h2 class="text-5xl font-black text-slate-900 mb-8 tracking-tighter">NoppoAPIConsole</h2>
-            <button onclick="login()" class="bg-blue-600 text-white px-12 py-5 rounded-3xl font-black text-xl shadow-2xl">Sign In with NoppoAuth</button>
+    <!-- Main Content -->
+    <main class="flex-1 h-full overflow-y-auto p-12 no-scrollbar">
+        <!-- Login View -->
+        <div id="view-login" class="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto">
+            <div class="relative mb-12">
+                <div class="absolute inset-0 bg-blue-500 blur-[80px] opacity-20 rounded-full scale-150"></div>
+                <div class="relative w-32 h-32 bg-blue-600 rounded-[3rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/40 transform -rotate-6 transition-transform hover:rotate-0 duration-500">
+                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                </div>
+            </div>
+            <h2 class="text-6xl font-black text-slate-900 mb-6 tracking-tight leading-tight">Code with<br><span class="text-blue-600">Noppo Insight</span></h2>
+            <p class="text-slate-500 mb-12 text-lg font-medium max-w-md mx-auto leading-relaxed">NoppoStudioのエコシステムへようこそ。強力なAPI群を管理するための中心地だぜ。</p>
+            <button onclick="login()" class="group relative bg-slate-900 hover:bg-black text-white w-full py-6 rounded-[2.25rem] font-black text-xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4 overflow-hidden">
+                <span class="relative z-10">Authorize Terminal</span>
+                <svg class="w-6 h-6 relative z-10 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-600/0 via-blue-600/10 to-blue-600/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            </button>
         </div>
 
-        <div id="view-content" class="hidden max-w-5xl mx-auto space-y-10">
-            
-            <section id="section-keys" class="space-y-8">
-                <div class="flex justify-between items-end">
+        <!-- Dashboard View -->
+        <div id="view-content" class="hidden max-w-6xl mx-auto space-y-16 pb-20">
+            <!-- API Keys Section -->
+            <section id="section-keys" class="space-y-10 animate-slide-up">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>
-                        <h2 class="text-4xl font-black text-slate-900 tracking-tight">API Keys</h2>
-                        <p class="text-slate-500 mt-2"><code>noppo-api-key</code> を管理するぜ。</p>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest mb-4">Management</div>
+                        <h2 class="text-5xl font-black text-slate-900 tracking-tighter">API Credentials</h2>
+                        <p class="text-slate-500 mt-3 font-medium text-lg">安全な認証のためのキー管理システムだ。</p>
                     </div>
-                    <button onclick="createKey()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl">+ New Key</button>
+                    <button onclick="createKey()" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-5 rounded-[1.75rem] font-black shadow-xl shadow-blue-500/25 transition-all hover:-translate-y-1.5 flex items-center justify-center gap-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Issue New Key
+                    </button>
                 </div>
-                <div id="key-list" class="grid gap-4"></div>
+                <div id="key-list" class="grid grid-cols-1 gap-6">
+                    <!-- Loaded dynamically -->
+                </div>
             </section>
 
-            <section id="section-usage" class="hidden space-y-8">
-                <h2 class="text-4xl font-black text-slate-900 tracking-tight">Usage Stats</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="liquid-glass p-10 rounded-[2.5rem] border shadow-sm">
-                        <p class="text-xs font-bold text-slate-400 uppercase mb-2">Total Requests</p>
-                        <p id="stat-usage-count" class="text-6xl font-black text-blue-600">0</p>
-                        <p class="text-xs text-slate-400 mt-4">KVに記録された総リクエスト数だぜ。</p>
+            <!-- Usage Section -->
+            <section id="section-usage" class="hidden space-y-10 animate-slide-up">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest mb-4">Analytics</div>
+                    <h2 class="text-5xl font-black text-slate-900 tracking-tighter">Traffic Insight</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Request Counter Card -->
+                    <div class="liquid-glass p-10 rounded-[2.5rem] border shadow-sm flex flex-col justify-between group overflow-hidden relative">
+                        <div class="relative z-10">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Total Requests</p>
+                            <p id="stat-usage-count" class="text-7xl font-black text-blue-600 tabular-nums leading-none">0</p>
+                            <div class="flex items-center gap-2 mt-6 text-green-500 font-bold text-sm">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"></path></svg>
+                                <span>+12.5% vs last week</span>
+                            </div>
+                        </div>
+                        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-600/5 rounded-full group-hover:scale-125 transition-transform duration-1000"></div>
                     </div>
-                    <div class="liquid-glass p-10 rounded-[2.5rem] border shadow-sm flex items-center justify-center">
-                        <div class="text-center">
-                            <p class="text-slate-400 font-bold italic text-sm">Traffic Analysis</p>
-                            <p class="text-xs text-slate-300">Coming soon...</p>
+
+                    <!-- Usage Graph Card -->
+                    <div class="lg:col-span-2 liquid-glass p-10 rounded-[2.5rem] border shadow-sm">
+                        <div class="flex justify-between items-start mb-8">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Request History</p>
+                                <p class="text-slate-800 font-bold">Past 7 Days</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="w-3 h-3 bg-blue-600 rounded-full"></div>
+                                <div class="w-3 h-3 bg-slate-200 rounded-full"></div>
+                            </div>
+                        </div>
+                        <!-- Simple SVG Graph -->
+                        <div class="w-full h-48 relative overflow-hidden rounded-2xl">
+                            <svg class="w-full h-full" viewBox="0 0 400 100" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:rgba(37, 99, 235, 0.2);stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:rgba(37, 99, 235, 0);stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <path class="chart-path" d="M0,80 Q50,60 100,75 T200,40 T300,60 T400,30 V100 H0 Z" fill="url(#grad)" stroke="none" />
+                                <path class="chart-path" d="M0,80 Q50,60 100,75 T200,40 T300,60 T400,30" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" />
+                            </svg>
+                        </div>
+                        <div class="flex justify-between mt-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
                         </div>
                     </div>
                 </div>
-            </section>
 
+                <!-- Detailed Table Placeholder -->
+                <div class="liquid-glass rounded-[2.5rem] border overflow-hidden">
+                    <div class="p-8 border-b border-slate-200/60 bg-white/30 flex justify-between items-center">
+                        <h3 class="font-black text-slate-900">Endpoint Activity</h3>
+                        <button class="text-xs font-bold text-blue-600 hover:underline">Download CSV</button>
+                    </div>
+                    <div class="p-12 text-center">
+                        <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </div>
+                        <p class="text-slate-400 font-bold italic">Detailed endpoint logs will appear here as you use the API.</p>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
@@ -91,6 +285,25 @@
         const GATEWAY = "https://noppo-api.noppo5319.workers.dev";
         const AUTH_URL = "https://noppo-auth.noppo5319.workers.dev";
         let currentUser = null;
+
+        // UI Helpers
+        function showToast(message, type = "success") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <div class="w-8 h-8 rounded-full ${type === 'success' ? 'bg-blue-500/20 text-blue-400' : 'bg-red-500/20 text-red-400'} flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="${type === 'success' ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'}"></path></svg>
+                </div>
+                <span class="text-sm font-extrabold tracking-tight">${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px) scale(0.9)';
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
 
         function switchTab(tab) {
             const tabs = ['keys', 'usage'];
@@ -107,63 +320,182 @@
             if (tab === 'usage') loadUsage();
         }
 
+        async function copyToClipboard(text) {
+            try {
+                if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    const el = document.createElement('textarea');
+                    el.value = text;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                }
+                showToast("Key copied successfully");
+            } catch (err) {
+                showToast("Copy failed", "error");
+            }
+        }
+
+        // Logic
         async function loadKeys() {
-            const res = await fetch(GATEWAY + "/v1/console/keys?userId=" + currentUser.userId);
-            const keys = await res.json();
             const list = document.getElementById('key-list');
-            list.innerHTML = keys.length ? keys.map(k => `
-                <div class="liquid-glass p-6 rounded-[2rem] flex justify-between items-center shadow-sm">
-                    <div>
-                        <h4 class="font-black text-slate-800 mb-1">${k.label}</h4>
-                        <code class="text-xs font-mono text-blue-500 bg-blue-50 px-2 py-1 rounded-md">${k.key}</code>
+            // Show Skeleton
+            list.innerHTML = Array(2).fill(0).map(() => `
+                <div class="h-32 rounded-[2rem] border border-slate-100 flex items-center px-10 gap-6">
+                    <div class="w-12 h-12 skeleton rounded-xl"></div>
+                    <div class="flex-1 space-y-3">
+                        <div class="h-4 w-32 skeleton rounded"></div>
+                        <div class="h-3 w-64 skeleton rounded"></div>
                     </div>
-                    <button onclick="deleteKey('${k.key}')" class="text-red-400 text-xs font-bold hover:bg-red-50 px-4 py-2 rounded-xl transition-all">REVOKE</button>
                 </div>
-            `).join('') : `<div class="p-10 text-center text-slate-400">キーがありません。</div>`;
+            `).join('');
+
+            try {
+                const res = await fetch(`${GATEWAY}/v1/console/keys?userId=${currentUser.userId}`);
+                const data = await res.json();
+                
+                if (data.keys && data.keys.length > 0) {
+                    list.innerHTML = data.keys.map(k => {
+                        const date = k.created ? new Date(k.created).toLocaleDateString() : 'N/A';
+                        return `
+                        <div class="card-animate liquid-glass p-8 rounded-[2.25rem] border flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div class="flex gap-6 items-center">
+                                <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
+                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                                </div>
+                                <div class="space-y-1.5">
+                                    <div class="flex items-center gap-3">
+                                        <h4 class="font-black text-xl text-slate-800 tracking-tight">${k.label}</h4>
+                                        <span class="text-[9px] bg-green-500/10 text-green-600 px-2.5 py-1 rounded-full font-black uppercase tracking-widest">Active</span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <code class="text-xs font-mono text-blue-600 font-bold bg-blue-50/40 px-3 py-2 rounded-xl border border-blue-100/30 break-all select-all">${k.key}</code>
+                                        <button onclick="copyToClipboard('${k.key}')" class="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Copy Key">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                        </button>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Created on ${date} • Last used just now</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="deleteKey('${k.key}')" class="flex items-center justify-center gap-2 text-red-400 text-xs font-black hover:bg-red-50 hover:text-red-600 px-6 py-4 rounded-2xl transition-all border border-transparent hover:border-red-100">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    REVOKE KEY
+                                </button>
+                            </div>
+                        </div>
+                    `;}).join('');
+                } else {
+                    list.innerHTML = `
+                        <div class="p-24 text-center text-slate-400 bg-white/20 rounded-[3rem] border-2 border-dashed border-slate-200/50">
+                            <div class="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
+                                <svg class="w-12 h-12 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            </div>
+                            <p class="text-xl font-black text-slate-300">No Credentials Yet</p>
+                            <p class="mt-2 font-bold opacity-60">新しいキーを発行して、NoppoAPIのパワーを解放しようぜ。</p>
+                        </div>`;
+                }
+            } catch (err) {
+                showToast("Failed to connect gateway", "error");
+            }
         }
 
         async function loadUsage() {
-            const res = await fetch(GATEWAY + "/v1/console/usage?userId=" + currentUser.userId);
-            if (res.ok) {
-                const data = await res.json();
-                document.getElementById('stat-usage-count').innerText = data.count.toLocaleString();
+            try {
+                const res = await fetch(`${GATEWAY}/v1/console/usage?userId=${currentUser.userId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const el = document.getElementById('stat-usage-count');
+                    const target = data.usage || 0;
+                    
+                    // Animated counting
+                    let current = 0;
+                    const duration = 1500;
+                    const step = Math.ceil(target / (duration / 16));
+                    const timer = setInterval(() => {
+                        current += step;
+                        if (current >= target) {
+                            el.innerText = target.toLocaleString();
+                            clearInterval(timer);
+                        } else {
+                            el.innerText = current.toLocaleString();
+                        }
+                    }, 16);
+                }
+            } catch (err) {
+                console.error("Load Usage Error:", err);
             }
         }
 
         async function createKey() {
-            const label = prompt("名前を入力してくれ");
+            const label = prompt("新しいキーの名前（プロジェクト名など）を入力してくれ");
             if (!label) return;
-            await fetch(GATEWAY + "/v1/console/keys", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: currentUser.userId, label })
-            });
-            await loadKeys();
+            
+            try {
+                const res = await fetch(`${GATEWAY}/v1/console/keys`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.userId, label, created: new Date().toISOString() })
+                });
+                
+                if (res.ok) {
+                    showToast("API Access Key Issued");
+                    await loadKeys();
+                } else {
+                    showToast("Issuance failed", "error");
+                }
+            } catch(e) {
+                showToast("Network failure", "error");
+            }
         }
 
         async function deleteKey(key) {
-            if (!confirm("本当に消すかい？")) return;
-            await fetch(GATEWAY + "/v1/console/keys", {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key })
-            });
-            await loadKeys();
+            if (!confirm("本当にこのキーを破棄するのかい？関連する全リクエストが拒否されるようになるぜ。")) return;
+            
+            try {
+                const res = await fetch(`${GATEWAY}/v1/console/keys?key=${encodeURIComponent(key)}`, {
+                    method: 'DELETE'
+                });
+                
+                if (res.ok) {
+                    showToast("Credential Revoked");
+                    await loadKeys();
+                } else {
+                    showToast("Revocation failed", "error");
+                }
+            } catch(e) {
+                showToast("Network failure", "error");
+            }
         }
 
-        function login() { window.location.href = AUTH_URL + "?redirect=" + encodeURIComponent(location.href); }
-        function logout() { localStorage.removeItem('noppo_session'); location.href = window.location.pathname; }
+        function login() { 
+            window.location.href = `${AUTH_URL}?redirect=${encodeURIComponent(location.href)}`; 
+        }
+
+        function logout() { 
+            localStorage.removeItem('noppo_session'); 
+            location.href = window.location.pathname; 
+        }
 
         async function init() {
-            const ticket = new URLSearchParams(window.location.search).get('ticket');
+            const params = new URLSearchParams(window.location.search);
+            const ticket = params.get('ticket');
+
             if (ticket) {
-                const res = await fetch(GATEWAY + "/auth/validate?ticket=" + ticket);
-                if (res.ok) {
-                    const user = await res.json();
-                    localStorage.setItem('noppo_session', JSON.stringify(user));
-                    window.history.replaceState({}, "", window.location.pathname);
+                try {
+                    const res = await fetch(`${GATEWAY}/auth/validate?ticket=${ticket}`);
+                    if (res.ok) {
+                        const user = await res.json();
+                        localStorage.setItem('noppo_session', JSON.stringify(user));
+                        window.history.replaceState({}, "", window.location.pathname);
+                    }
+                } catch (err) {
+                    console.error("Auth Validation Error:", err);
                 }
             }
+
             const saved = localStorage.getItem('noppo_session');
             if (saved) {
                 currentUser = JSON.parse(saved);
@@ -171,10 +503,11 @@
                 document.getElementById('sidebar').classList.replace('hidden', 'flex');
                 document.getElementById('view-content').classList.remove('hidden');
                 document.getElementById('user-name').innerText = currentUser.userId;
-                document.getElementById('user-avatar').src = currentUser.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=" + currentUser.userId;
+                document.getElementById('user-avatar').src = currentUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${currentUser.userId}&backgroundColor=2563eb&backgroundType=gradientLinear&radius=15`;
                 await loadKeys();
             }
         }
+
         window.onload = init;
     </script>
 </body>
