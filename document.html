@@ -2,68 +2,474 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>REST Resource: v1.documents | NoppoStudio Developers</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoppoAPI Documentation | NoppoStudio</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Roboto', Arial, sans-serif; color: #3c4043; background: #fff; display: flex; }
-        .sidebar-left { width: 280px; border-right: 1px solid #e0e0e0; height: 100vh; position: fixed; background: #f8f9fa; }
-        .main-container { margin-left: 280px; margin-right: 240px; padding: 48px 64px; width: 100%; }
-        .sidebar-right { width: 240px; position: fixed; right: 0; top: 80px; padding: 20px; font-size: 13px; color: #70757a; border-left: 1px solid #f1f3f4; }
-        
-        h1 { font-size: 32px; color: #202124; margin-bottom: 24px; }
-        .service-endpoint { font-family: 'Roboto Mono', monospace; background: #f1f3f4; padding: 12px; border-radius: 4px; margin: 16px 0; font-size: 14px; }
-        .method-table { width: 100%; border-collapse: collapse; margin: 24px 0; border: 1px solid #e0e0e0; }
-        .method-table th { background: #f8f9fa; text-align: left; padding: 12px; font-size: 13px; border-bottom: 1px solid #e0e0e0; }
-        .method-table td { padding: 12px; border-bottom: 1px solid #e0e0e0; font-size: 13px; }
-        .req { color: #d93025; font-weight: bold; }
+        :root {
+            --noppo-blue: #1a73e8; /* Google-like blue */
+            --bg-main: #ffffff;
+            --bg-side: #f8f9fa;
+            --border-color: #dadce0;
+            --text-main: #202124;
+            --text-muted: #5f6368;
+            --code-bg: #f1f3f4;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-main); 
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: var(--bg-side);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-brand {
+            padding: 0 1.5rem 1.5rem;
+            display: flex;
+            items-center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .nav-group-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1rem 1.5rem 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.875rem;
+            color: #3c4043;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .nav-item:hover {
+            background: #e8f0fe;
+            color: var(--noppo-blue);
+        }
+
+        .nav-item.active {
+            background: #e8f0fe;
+            color: var(--noppo-blue);
+            font-weight: 600;
+        }
+
+        /* Main Content Layout */
+        .content-wrapper {
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 3rem 4rem;
+            max-width: 1000px;
+        }
+
+        /* Documentation Components */
+        .section-header {
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+        }
+
+        h1 { font-size: 2.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-main); }
+        h2 { font-size: 1.75rem; font-weight: 600; margin-top: 3rem; margin-bottom: 1rem; }
+        h3 { font-size: 1.25rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; }
+
+        .api-panel {
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .api-header {
+            background: #f8f9fa;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .method-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: white;
+            text-transform: uppercase;
+        }
+        .method-post { background: #188038; }
+        .method-get { background: #1a73e8; }
+
+        .endpoint-path {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--text-main);
+        }
+
+        /* Parameter Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            margin: 1rem 0;
+        }
+
+        .data-table th, .data-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* Tabs for Code Samples */
+        .tab-container {
+            margin-top: 1rem;
+            background: #202124;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .tab-bar {
+            display: flex;
+            background: #202124;
+            padding: 0 1rem;
+            border-bottom: 1px solid #3c4043;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #9aa0a6;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: white;
+            border-bottom-color: #8ab4f8;
+        }
+
+        .code-view {
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #e8eaed;
+            overflow-x: auto;
+            display: none;
+        }
+
+        .code-view.active {
+            display: block;
+        }
+
+        .notice-info {
+            background: #e8f0fe;
+            border-left: 4px solid var(--noppo-blue);
+            padding: 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            margin: 1.5rem 0;
+        }
+
+        .badge-req { color: #d93025; font-size: 10px; font-weight: 700; margin-left: 4px; }
     </style>
 </head>
 <body>
-    <aside class="sidebar-left p-6">
-        <div class="text-blue-600 font-bold mb-8 flex items-center gap-2">
-            <span class="text-2xl">G</span> Noppo Workspace
-        </div>
-        <div class="text-xs font-bold text-gray-400 mb-4">REST リソース</div>
-        <div class="text-sm font-bold text-gray-800 ml-2">v1.documents</div>
-        <div class="text-sm text-blue-600 bg-blue-50 py-2 px-4 rounded-r-full mt-2">概要</div>
-    </aside>
 
-    <main class="main-container">
-        <div class="text-sm text-gray-500 mb-4">ホーム > Noppo Workspace > Noppo Docs > リファレンス</div>
-        <h1>Noppo Docs API <span class="text-gray-400 text-sm font-normal">v1</span></h1>
-        
-        <div class="border-l-4 border-blue-600 pl-6 mb-12">
-            <p class="font-bold">このページの内容</p>
-            <p class="text-sm mt-2">サービス: <code class="text-blue-600">noppo-api.noppo5319.workers.dev</code></p>
-            <p class="text-sm mt-1">REST リソース: v1.documents</p>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <span class="text-lg font-bold">NoppoAPI Docs</span>
         </div>
 
-        <p class="mb-8">Noppo ドキュメントの読み取り、書き込み、および管理を行います。本リソースは NoppoDrive インフラストラクチャに依存します。</p>
+        <nav>
+            <div class="nav-group-title">はじめに</div>
+            <a href="#intro" class="nav-item active">概要</a>
+            <a href="#auth" class="nav-item">認証方法</a>
 
-        <h2 class="text-2xl border-bottom mb-4">サービス: noppo-api.noppo5319.workers.dev</h2>
-        <p class="text-sm">このサービスを呼び出す際には、以下のエンドポイントを使用してください。全ての通信には <code>noppo-api-key</code> が必要です。</p>
+            <div class="nav-group-title">API リファレンス</div>
+            <a href="#intelligence" class="nav-item">NoppoIntelligence</a>
+            <a href="#drive" class="nav-item">NoppoDrive</a>
+            <a href="#identity" class="nav-item">NoppoIdentity</a>
 
-        <div class="service-endpoint">POST https://noppo-api.noppo5319.workers.dev/v1/ai/chat</div>
-
-        <h3 class="text-lg font-bold mt-12 mb-4">メソッド: ai.chat</h3>
-        <table class="method-table">
-            <thead>
-                <tr><th>パラメータ名</th><th>型</th><th>説明</th></tr>
-            </thead>
-            <tbody>
-                <tr><td><code>messages</code></td><td><code>Array&lt;Object&gt;</code></td><td><span class="req">必須</span> 会話コンテキストのリスト。</td></tr>
-                <tr><td><code>model</code></td><td><code>string</code></td><td>使用するモデル識別子。</td></tr>
-            </tbody>
-        </table>
-    </main>
-
-    <aside class="sidebar-right">
-        <p class="font-bold mb-4 text-black">このページの内容</p>
-        <ul class="space-y-3">
-            <li class="text-blue-600">サービスエンドポイント</li>
-            <li>メソッド: ai.chat</li>
-            <li>リソース表現</li>
-        </ul>
+            <div class="nav-group-title">その他</div>
+            <a href="#errors" class="nav-item">エラーコード</a>
+            <a href="#limits" class="nav-item">利用制限</a>
+            
+            <div class="mt-8 pt-4 border-t border-gray-200">
+                <a href="index.html" class="nav-item text-blue-600 font-bold">← コンソールに戻る</a>
+            </div>
+        </nav>
     </aside>
+
+    <!-- Main Content Area -->
+    <div class="content-wrapper">
+        <main class="main-content">
+            
+            <section id="intro">
+                <div class="section-header">
+                    <h1>API 概要</h1>
+                    <p class="text-gray-600">NoppoAPI は、NoppoStudio の各サービスを単一のエンドポイントで統合管理するためのデベロッパー向けゲートウェイです。</p>
+                </div>
+                
+                <p>すべての API リクエストのベース URL は以下の通りです：</p>
+                <div class="bg-gray-100 p-3 rounded font-mono text-sm my-4 border border-gray-300">
+                    https://noppo-api.noppo5319.workers.dev
+                </div>
+
+                <div class="notice-info">
+                    <strong>注意:</strong> すべてのリクエストは HTTPS 経由である必要があります。HTTP リクエストは自動的に 301 リダイレクトされます。
+                </div>
+            </section>
+
+            <section id="auth">
+                <h2>認証方法</h2>
+                <p>NoppoAPI のすべてのエンドポイントは API キーによる認証を必要とします。API キーはコンソールから発行してください。</p>
+                
+                <h3>リクエストヘッダー</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ヘッダー名</th>
+                            <th>値</th>
+                            <th>説明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>noppo-api-key</code></td>
+                            <td><code>np_...</code></td>
+                            <td>発行された API キーを指定してください。<span class="badge-req">必須</span></td>
+                        </tr>
+                        <tr>
+                            <td><code>Content-Type</code></td>
+                            <td><code>application/json</code></td>
+                            <td>POST リクエストの際に指定してください。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="intelligence">
+                <div class="section-header">
+                    <h2>NoppoIntelligence</h2>
+                    <p>対話型 AI をアプリケーションに組み込むためのサービスです。</p>
+                </div>
+
+                <div class="api-panel">
+                    <div class="api-header">
+                        <span class="method-tag method-post">POST</span>
+                        <span class="endpoint-path">/v1/ai/chat</span>
+                    </div>
+                    
+                    <div class="p-4 bg-white">
+                        <h4 class="font-bold text-sm mb-2">リクエストボディ</h4>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>パラメータ</th>
+                                    <th>型</th>
+                                    <th>説明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>message</code></td>
+                                    <td>string</td>
+                                    <td>AI に送信するテキスト内容。<span class="badge-req">必須</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>agent_mode</code></td>
+                                    <td>boolean</td>
+                                    <td>Web 検索を使用するかどうか（デフォルト: false）。</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4 class="font-bold text-sm mt-6 mb-2">実装例</h4>
+                        <div class="tab-container">
+                            <div class="tab-bar">
+                                <div class="tab-btn active" onclick="switchCode(this, 'js-chat')">JavaScript</div>
+                                <div class="tab-btn" onclick="switchCode(this, 'curl-chat')">cURL</div>
+                                <div class="tab-btn" onclick="switchCode(this, 'res-chat')">Response</div>
+                            </div>
+                            <div id="js-chat" class="code-view active">
+<pre>const res = await fetch("https://noppo-api.noppo5319.workers.dev/v1/ai/chat", {
+  method: "POST",
+  headers: {
+    "noppo-api-key": "YOUR_API_KEY",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({ message: "こんにちは" })
+});
+const data = await res.json();</pre>
+                            </div>
+                            <div id="curl-chat" class="code-view">
+<pre>curl -X POST https://noppo-api.noppo5319.workers.dev/v1/ai/chat \
+  -H "noppo-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "こんにちは"}'</pre>
+                            </div>
+                            <div id="res-chat" class="code-view">
+<pre>{
+  "status": "success",
+  "content": "こんにちは！NoppoIntelligenceです。何かお手伝いしましょうか？",
+  "model": "noppo-v3-pro"
+}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="drive">
+                <div class="section-header">
+                    <h2>NoppoDrive</h2>
+                    <p>クラウドストレージのファイル情報を操作・取得します。</p>
+                </div>
+
+                <div class="api-panel">
+                    <div class="api-header">
+                        <span class="method-tag method-get">GET</span>
+                        <span class="endpoint-path">/v1/drive/list</span>
+                    </div>
+                    <div class="p-4 bg-white">
+                        <p class="text-sm text-gray-600 mb-4">認証されたユーザーのファイル・ディレクトリ構造をリスト形式で取得します。</p>
+                        <div class="tab-container">
+                            <div class="tab-bar">
+                                <div class="tab-btn active" onclick="switchCode(this, 'res-drive')">JSON Response</div>
+                            </div>
+                            <div id="res-drive" class="code-view active">
+<pre>[
+  {
+    "id": "f_01",
+    "name": "ProjectDocs",
+    "type": "folder",
+    "updated": "2026-03-01T12:00:00Z"
+  }
+]</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="errors">
+                <h2>エラーコード</h2>
+                <p>API リクエストの結果、以下のステータスコードが返される場合があります。</p>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>コード</th>
+                            <th>ステータス</th>
+                            <th>理由</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold">400</td>
+                            <td>Bad Request</td>
+                            <td>パラメータが不足しているか、形式が正しくありません。</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">401</td>
+                            <td>Unauthorized</td>
+                            <td>API キーが指定されていないか、誤っています。</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">403</td>
+                            <td>Forbidden</td>
+                            <td>指定された API キーには権限がありません。</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">429</td>
+                            <td>Too Many Requests</td>
+                            <td>レート制限を超過しました。しばらく待ってから再試行してください。</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">500</td>
+                            <td>Internal Server Error</td>
+                            <td>サーバー内部で予期しないエラーが発生しました。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <footer class="mt-20 pt-8 border-t border-gray-200 text-gray-500 text-sm">
+                <p>© 2026 NoppoStudio. v36.2.0 | <a href="#" class="text-blue-600">プライバシーポリシー</a></p>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        function switchCode(btn, id) {
+            // タブのボタンを切り替え
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // 表示するコードを切り替え
+            const container = parent.parentElement;
+            container.querySelectorAll('.code-view').forEach(v => v.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // スムーズスクロールに合わせたナビゲーションのハイライト
+        window.addEventListener('scroll', () => {
+            let current = "";
+            const sections = document.querySelectorAll("section");
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute("id");
+                }
+            });
+
+            document.querySelectorAll(".nav-item").forEach(item => {
+                item.classList.remove("active");
+                if (item.getAttribute("href") === "#" + current) {
+                    item.classList.add("active");
+                }
+            });
+        });
+    </script>
 </body>
 </html>
